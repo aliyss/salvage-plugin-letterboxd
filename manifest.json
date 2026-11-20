@@ -1,0 +1,42 @@
+{
+  "pluginApiVersion": 1,
+  "id": "salvage-plugin-letterboxd",
+  "name": "Letterboxd",
+  "version": "0.1.0",
+  "runtime": { "entry": "dist/plugin.js" },
+  "provides": [
+    {
+      "data": "link-preview",
+      "command": "preview",
+      "timeoutMs": 12000,
+      "settings": []
+    }
+  ],
+  "contributes": [],
+  "canvas": {
+    "command": "catalogue",
+    "name": "Watchlist",
+    "icon": "film",
+    "refreshMs": 900000,
+    "settings": [
+      {
+        "key": "username",
+        "kind": "text",
+        "label": "Letterboxd username",
+        "description": "The profile whose watchlist the canvas shows. It is read from letterboxd.com on this computer; the profile has to be public.",
+        "default": "",
+        "maxLength": 40
+      },
+      {
+        "key": "perPage",
+        "kind": "number",
+        "label": "How many films",
+        "description": "The canvas asks for this many at a time and loads more as you scroll.",
+        "default": 30,
+        "min": 5,
+        "max": 50
+      }
+    ]
+  },
+  "settings": []
+}
