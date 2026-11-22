@@ -2,7 +2,7 @@
   "pluginApiVersion": 1,
   "id": "salvage-plugin-letterboxd",
   "name": "Letterboxd",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "runtime": { "entry": "dist/plugin.js" },
   "provides": [
     {
@@ -20,14 +20,6 @@
     "refreshMs": 900000,
     "settings": [
       {
-        "key": "username",
-        "kind": "text",
-        "label": "Letterboxd username",
-        "description": "The profile whose watchlist the canvas shows. It is read from letterboxd.com on this computer; the profile has to be public.",
-        "default": "",
-        "maxLength": 40
-      },
-      {
         "key": "perPage",
         "kind": "number",
         "label": "How many films",
@@ -38,5 +30,20 @@
       }
     ]
   },
-  "settings": []
+  "settings": [
+    {
+      "key": "username",
+      "kind": "secret",
+      "label": "Letterboxd username",
+      "description": "The public profile whose watchlist this plugin reads. The helper keeps it on this computer, and the profile has to be public.",
+      "maxLength": 40
+    }
+  ],
+  "auth": {
+    "url": "https://letterboxd.com/",
+    "urlLabel": "Letterboxd",
+    "secret": "username",
+    "check": "whoami",
+    "note": "Sign in with the public Letterboxd username to read. The helper checks it against letterboxd.com here and keeps it on this computer; nothing about it reaches your account."
+  }
 }

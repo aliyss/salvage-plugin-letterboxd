@@ -7,7 +7,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdir, rename, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const TIMEOUT_MS = 8_000;
@@ -89,6 +89,25 @@ export async function keepStill(url: string | null): Promise<string | null> {
     await writeFile(part, bytes).catch(() => undefined);
     await rename(part, join(mediaDirectory(), name)).catch(() => undefined);
     return name;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The name a picture is already filed under here, found without fetching it.
+ * A page of posters is mostly ones already on disk, so this is what keeps a
+ * second visit to a canvas from asking for anything at all.
+ */
+export async function keptStill(url: string | null): Promise<string | null> {
+  const name = url ? stillName(url) : null;
+  return name && (await filed(name)) ? name : null;
+}
+
+/** The bytes of a picture already filed here, or null when it is not. */
+export async function readStill(name: string): Promise<Uint8Array | null> {
+  try {
+    return new Uint8Array(await readFile(join(mediaDirectory(), name)));
   } catch {
     return null;
   }

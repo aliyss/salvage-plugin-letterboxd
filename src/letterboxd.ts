@@ -337,6 +337,16 @@ export async function fetchWatchlist(
   };
 }
 
+/**
+ * The poster a film's own page names, or null when it names none. The watchlist
+ * grid does not ship its pictures, so this is where a card's poster comes from
+ * the first time that film is drawn; the plugin caches the address.
+ */
+export async function fetchPosterUrl(slug: string): Promise<string | null> {
+  const preview = parseFilm(await readPage(filmUrl(slug)));
+  return preview.imageUrl?.startsWith("https://") ? preview.imageUrl : null;
+}
+
 /** One film's preview fields, read from its own page. */
 export async function fetchPreview(slug: string): Promise<Preview> {
   const preview = parseFilm(await readPage(filmUrl(slug)));
