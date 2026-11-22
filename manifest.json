@@ -2,7 +2,7 @@
   "pluginApiVersion": 1,
   "id": "salvage-plugin-letterboxd",
   "name": "Letterboxd",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "runtime": {
     "entry": "dist/plugin.js"
   },
@@ -46,6 +46,7 @@
     "urlLabel": "Letterboxd",
     "secret": "username",
     "check": "whoami",
-    "note": "Sign in with the public Letterboxd username to read. No password, session or token is involved: the helper checks the name against letterboxd.com here and keeps it on this computer; nothing about it reaches your account."
+    "note": "Enter the public Letterboxd username to read. No password, session or token is involved: the helper checks the name against letterboxd.com here and keeps it on this computer; nothing about it reaches your account.",
+    "input": "text"
   }
 }
