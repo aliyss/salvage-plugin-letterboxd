@@ -2,7 +2,7 @@
   "pluginApiVersion": 1,
   "id": "salvage-plugin-letterboxd",
   "name": "Letterboxd",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "runtime": {
     "entry": "dist/plugin.js"
   },
@@ -22,6 +22,27 @@
     "refreshMs": 900000,
     "settings": [
       {
+        "key": "source",
+        "kind": "select",
+        "label": "Which list",
+        "description": "The profile's watchlist, the films it has watched, or one of its lists by name.",
+        "default": "watchlist",
+        "options": [
+          { "value": "watchlist", "label": "Watchlist" },
+          { "value": "films", "label": "Films watched" },
+          { "value": "list", "label": "One of their lists" }
+        ]
+      },
+      {
+        "key": "list",
+        "kind": "text",
+        "label": "List name",
+        "description": "The last part of letterboxd.com/<user>/list/<name>/ — for example imdb-top-250. You can paste the whole address.",
+        "when": { "source": ["list"] },
+        "default": "",
+        "maxLength": 160
+      },
+      {
         "key": "perPage",
         "kind": "number",
         "label": "How many films",
@@ -37,7 +58,7 @@
       "key": "username",
       "kind": "secret",
       "label": "Letterboxd username",
-      "description": "The public profile whose watchlist this plugin reads. The helper keeps it on this computer, and the profile has to be public.",
+      "description": "The public profile whose watchlist and lists this plugin reads. The helper keeps it on this computer, and the profile has to be public.",
       "maxLength": 40
     }
   ],

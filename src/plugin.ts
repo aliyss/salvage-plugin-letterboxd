@@ -5,11 +5,12 @@ import {
   fetchPreview,
   fetchWatchlist,
   filmSlugFrom,
+  listSlugFrom,
   usernameOf,
 } from "./letterboxd";
 import { PluginError, serve } from "./sdk";
 
-import type { Film } from "./letterboxd";
+import type { Film, ListSource } from "./letterboxd";
 import type { Data, Paging, Subject } from "./sdk";
 
 const DEFAULT_PER_PAGE = 30;
@@ -59,6 +60,28 @@ function usernameFrom(
     );
   }
   return username;
+}
+
+/**
+ * The list a canvas names. The watchlist is the one every canvas starts on, the
+ * watched films are the same grid at another address, and a list is named by
+ * the last part of its own address.
+ */
+function sourceFrom(settings: Record<string, unknown>): ListSource {
+  if (settings.source === "films") {
+    return { kind: "films" };
+  }
+  if (settings.source === "list") {
+    const slug = listSlugFrom(settings.list);
+    if (!slug) {
+      throw new PluginError(
+        "bad_subject",
+        "Name the list this canvas shows: the last part of its letterboxd.com address, such as imdb-top-250.",
+      );
+    }
+    return { kind: "list", slug };
+  }
+  return { kind: "watchlist" };
 }
 
 /**
@@ -114,7 +137,7 @@ async function postersFor(
 }
 
 /**
- * One page of the profile's watchlist.
+ * One page of the list the canvas names.
  *
  * Cards carry the poster filed on this computer and the colour that poster
  * leads with, read here when the picture is filed — the two things the grid
@@ -128,7 +151,11 @@ async function catalogue(
 ): Promise<Data> {
   const username = usernameFrom(settings, secrets);
   const { offset, limit } = pageOf(paging, perPageOf(settings.perPage));
-  const page = await fetchWatchlist(username, { offset, limit });
+  const page = await fetchWatchlist(
+    username,
+    { offset, limit },
+    sourceFrom(settings),
+  );
 
   const cache = await loadCache();
   const posters = await postersFor(page.films, cache.posters);

@@ -1,20 +1,24 @@
 # Letterboxd for Salvage
 
-A [Salvage](https://github.com/aliyss/salvage-web) plugin that adds a
-**Watchlist** canvas read from a public Letterboxd profile, and fills in the
-previews of links to Letterboxd films. Everything is read by the **Salvage
-Helper** on your own computer; nothing about the watchlist reaches the server.
+A [Salvage](https://github.com/aliyss/salvage-web) plugin that adds a canvas for
+any public list of a Letterboxd profile — its **Watchlist**, the films it has
+watched, or one of its own lists — and fills in the previews of links to
+Letterboxd films. Everything is read by the **Salvage Helper** on your own
+computer; nothing about the list reaches the server.
 
 ## What it adds
 
 - A canvas, which works like any other: a URL, an entry in the canvas switcher,
   and a page of its own. You name it and choose its route in the plugin's
   settings.
-- One card per film on the profile's watchlist, twenty at a time, loading more
-  as you scroll. A card carries the film's name, its year, and a link to its
-  Letterboxd page. Its poster is filed on this computer the first time the card
-  is drawn, and the colour that poster leads with is what the colour view sorts
-  by.
+- One card per film on the list, twenty at a time, loading more as you scroll.
+  A card carries the film's name, its year, and a link to its Letterboxd page.
+  Its poster is filed on this computer the first time the card is drawn, and
+  the colour that poster leads with is what the colour view sorts by.
+- A pick of which list a canvas shows: the watchlist, the films watched, or one
+  of the profile's lists, named by the last part of its address
+  (`imdb-top-250`). A second canvas can show another list without touching the
+  first.
 - A note for any card. Notes are ordinary Salvage notes — Markdown, tags,
   mentions, Trash — stored on the canvas the plugin added.
 - **Link previews.** A link to a Letterboxd film whose page came back with no
@@ -34,10 +38,12 @@ all. Signing out removes the name from this computer.
 
 Letterboxd has no public API, so what it publishes is what is read:
 
-- `https://letterboxd.com/<username>/watchlist/` — the grid, one request per
-  page, and `.../page/<n>/` after it. Each tile names its film in attributes
+- `https://letterboxd.com/<username>/watchlist/`,
+  `.../films/` and `.../list/<name>/` — the grid, one request per page, and
+  `.../page/<n>/` after it. Each tile names its film in attributes
   (`data-item-name`, `data-item-slug`, `data-item-link`), which is what a card
-  is built from.
+  is built from; a list's tiles are poster items rather than grid items, and
+  both are read the same way.
 - `https://letterboxd.com/film/<slug>/` — the schema.org block on a film's page:
   name, description, poster. Its `og:` tags are the fallback. A film's page is
   read once for its poster, and that address is kept in the plugin's cache so a
@@ -60,6 +66,8 @@ Two things about that shape decide how the canvas behaves:
 | Setting | Where | Meaning |
 | --- | --- | --- |
 | Letterboxd username | Plugin sign-in | The public profile the plugin reads |
+| Which list | Canvas | Watchlist, films watched, or one of their lists |
+| List name | Canvas | The last part of the list's address, or the whole address |
 | How many films | Canvas | Between 5 and 50, loaded as you scroll |
 
 | Canvas name | Watchlist | The name the canvas starts with |

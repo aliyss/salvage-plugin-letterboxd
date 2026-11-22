@@ -51,6 +51,12 @@ export type WatchlistPage = {
   hasNext: boolean;
 };
 
+/** Which public list of a profile a canvas reads. */
+export type ListSource =
+  | { kind: "watchlist" }
+  | { kind: "films" }
+  | { kind: "list"; slug: string };
+
 /** What a link preview needs from a film: its name, its plot and its poster. */
 export type Preview = {
   title: string | null;
@@ -112,11 +118,46 @@ export function filmSlugFrom(url: string | null | undefined): string | null {
   return slug && slug.length <= MAX_SLUG ? slug : null;
 }
 
-/** A watchlist page, or the profile's first when `page` is one. */
-export function watchlistUrl(username: string, page: number): string {
+/** A list page, or its first when `page` is one. */
+export function listUrl(
+  source: ListSource,
+  username: string,
+  page: number,
+): string {
+  const path =
+    source.kind === "films"
+      ? `${username}/films/`
+      : source.kind === "list"
+        ? `${username}/list/${source.slug}/`
+        : `${username}/watchlist/`;
   return page <= 1
-    ? `${ORIGIN}/${username}/watchlist/`
-    : `${ORIGIN}/${username}/watchlist/page/${String(page)}/`;
+    ? `${ORIGIN}/${path}`
+    : `${ORIGIN}/${path}page/${String(page)}/`;
+}
+
+/** The profile's watchlist, or its first page when `page` is one. */
+export function watchlistUrl(username: string, page: number): string {
+  return listUrl({ kind: "watchlist" }, username, page);
+}
+
+/**
+ * A list's own name: the last part of `letterboxd.com/<user>/list/<name>/`, or
+ * the whole address pasted from the browser. Null for anything that is not one.
+ */
+export function listSlugFrom(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const raw = value.trim();
+  if (!raw) {
+    return null;
+  }
+  const match =
+    /letterboxd\.com\/(?:[A-Za-z0-9_-]+)\/list\/([A-Za-z0-9][A-Za-z0-9-]{0,119})\/?/i.exec(
+      raw,
+    );
+  const slug = match?.[1] ?? (/^[A-Za-z0-9][A-Za-z0-9-]{0,119}$/.test(raw) ? raw : null);
+  return slug ? slug.toLowerCase() : null;
 }
 
 /** A film's own page. */
@@ -195,17 +236,18 @@ function nameAndYear(value: string | null): {
 }
 
 /**
- * The films on a watchlist page.
+ * The films on a list page.
  *
- * Every tile is one `<li class="griditem">`, and the film it names is in the
- * tile's own attributes — the site's script turns those into a picture later,
- * which is why a tile usually carries no poster here.
+ * Every tile is a `<li>` — a `griditem` on a watchlist or watched-films page,
+ * and a `posteritem` on a list — and the film it names is in the tile's own
+ * attributes. The site's script turns those into a picture later, which is why
+ * a tile usually carries no poster here.
  */
 export function parseWatchlist(html: string): WatchlistPage {
   const films: Film[] = [];
   const seen = new Set<string>();
 
-  for (const block of html.split('<li class="griditem">').slice(1)) {
+  for (const block of html.split(/<li[\s>]/).slice(1)) {
     const link = attribute(block, "data-item-link");
     const slug = link
       ? filmSlugFrom(`${ORIGIN}${link}`)
@@ -296,11 +338,12 @@ export function parseFilm(html: string): Preview {
 export async function fetchWatchlist(
   username: string,
   options: { offset: number; limit: number },
+  source: ListSource = { kind: "watchlist" },
 ): Promise<{ films: Film[]; hasMore: boolean }> {
   const offset = Math.max(0, Math.round(options.offset));
   const limit = Math.min(MAX_ITEMS, Math.max(1, Math.round(options.limit)));
 
-  const first = parseWatchlist(await readPage(watchlistUrl(username, 1)));
+  const first = parseWatchlist(await readPage(listUrl(source, username, 1)));
   const perPage = Math.max(1, first.films.length);
   const startPage = Math.floor(offset / perPage) + 1;
 
@@ -312,7 +355,7 @@ export async function fetchWatchlist(
   // slice's own page numbers are counted from, so those pages are read too.
   while (page < startPage && hasNext && page < MAX_PAGE_FETCHES) {
     page += 1;
-    const next = parseWatchlist(await readPage(watchlistUrl(username, page)));
+    const next = parseWatchlist(await readPage(listUrl(source, username, page)));
     collected.push(...next.films);
     hasNext = next.hasNext;
   }
@@ -322,7 +365,7 @@ export async function fetchWatchlist(
     page < MAX_PAGE_FETCHES
   ) {
     page += 1;
-    const next = parseWatchlist(await readPage(watchlistUrl(username, page)));
+    const next = parseWatchlist(await readPage(listUrl(source, username, page)));
     collected.push(...next.films);
     hasNext = next.hasNext;
   }

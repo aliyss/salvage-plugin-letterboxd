@@ -4,6 +4,8 @@ import {
   decodeEntities,
   filmSlugFrom,
   filmUrl,
+  listSlugFrom,
+  listUrl,
   parseFilm,
   parseWatchlist,
   usernameOf,
@@ -90,6 +92,42 @@ describe("watchlistUrl", () => {
   });
 });
 
+describe("listUrl", () => {
+  test("names watched films and one of the profile's lists", () => {
+    expect(listUrl({ kind: "films" }, "dave", 1)).toBe(
+      "https://letterboxd.com/dave/films/",
+    );
+    expect(listUrl({ kind: "films" }, "dave", 2)).toBe(
+      "https://letterboxd.com/dave/films/page/2/",
+    );
+    expect(listUrl({ kind: "list", slug: "imdb-top-250" }, "dave", 1)).toBe(
+      "https://letterboxd.com/dave/list/imdb-top-250/",
+    );
+    expect(listUrl({ kind: "list", slug: "imdb-top-250" }, "dave", 2)).toBe(
+      "https://letterboxd.com/dave/list/imdb-top-250/page/2/",
+    );
+  });
+});
+
+describe("listSlugFrom", () => {
+  test("reads a list name or the address pasted from the browser", () => {
+    expect(listSlugFrom("imdb-top-250")).toBe("imdb-top-250");
+    expect(
+      listSlugFrom("https://letterboxd.com/dave/list/imdb-top-250/"),
+    ).toBe("imdb-top-250");
+    expect(
+      listSlugFrom("https://letterboxd.com/dave/list/IMDB-Top-250/page/2/"),
+    ).toBe("imdb-top-250");
+  });
+
+  test("is not fooled by an address that is not a list", () => {
+    expect(listSlugFrom("https://letterboxd.com/dave/watchlist/")).toBeNull();
+    expect(listSlugFrom("dave/../evil")).toBeNull();
+    expect(listSlugFrom("x".repeat(121))).toBeNull();
+    expect(listSlugFrom(undefined)).toBeNull();
+  });
+});
+
 describe("decodeEntities", () => {
   test("reads the entities Letterboxd writes into its attributes", () => {
     expect(decodeEntities("Black Bag &amp; Co.")).toBe("Black Bag & Co.");
@@ -120,6 +158,15 @@ describe("parseWatchlist", () => {
       },
     ]);
     expect(page.hasNext).toBe(true);
+  });
+
+  test("reads a list page whose tiles are poster items, not grid items", () => {
+    const list = `<ul>${TILE(
+      "the-shawshank-redemption",
+      "The Shawshank Redemption (1994)",
+      "the-shawshank-redemption",
+    ).replace('<li class="griditem">', '<li class="posteritem numbered-list-item">')}</ul>`;
+    expect(parseWatchlist(list).films[0]?.title).toBe("The Shawshank Redemption");
   });
 
   test("a tile the site repeats is drawn once", () => {
