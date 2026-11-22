@@ -38,13 +38,24 @@ function pageOf(
   return { offset: Math.max(0, Math.round(paging?.offset ?? 0)), limit };
 }
 
-/** The profile this canvas reads. A watchlist is public, so a name is all it takes. */
-function usernameFrom(settings: Record<string, unknown>): string {
-  const username = usernameOf(settings.username);
+/**
+ * The profile this plugin reads.
+ *
+ * The username is the plugin's own sign-in, kept by the helper beside every
+ * other credential, so every canvas and every link preview reads the same
+ * profile. A canvas made before it moved there still carries the name in its
+ * settings, and that one is used until the sign-in writes it.
+ */
+function usernameFrom(
+  settings: Record<string, unknown>,
+  secrets: Record<string, string> | undefined,
+): string {
+  const username =
+    usernameOf(secrets?.username) ?? usernameOf(settings.username);
   if (!username) {
     throw new PluginError(
       "bad_subject",
-      "Set the Letterboxd username this canvas reads, in the canvas's settings.",
+      "Sign in with your Letterboxd username in this plugin's settings first.",
     );
   }
   return username;
@@ -112,9 +123,10 @@ async function postersFor(
  */
 async function catalogue(
   settings: Record<string, unknown>,
+  secrets: Record<string, string> | undefined,
   paging: Paging | undefined,
 ): Promise<Data> {
-  const username = usernameFrom(settings);
+  const username = usernameFrom(settings, secrets);
   const { offset, limit } = pageOf(paging, perPageOf(settings.perPage));
   const page = await fetchWatchlist(username, { offset, limit });
 
@@ -147,6 +159,30 @@ async function catalogue(
 }
 
 /**
+ * Whose profile this computer holds. The sign-in card asks this after saving
+ * the name, and the helper reports the name only once Letterboxd has served the
+ * profile's first page — a private or misspelled name is refused with the
+ * reason, on the card.
+ */
+async function whoami(
+  secrets: Record<string, string> | undefined,
+): Promise<Data> {
+  const username = usernameOf(secrets?.username);
+  if (!username) {
+    throw new PluginError(
+      "bad_subject",
+      "Enter the public Letterboxd username this plugin reads.",
+    );
+  }
+
+  const page = await fetchWatchlist(username, { offset: 0, limit: 1 });
+  return {
+    kind: "auth",
+    text: `${username}${page.films.length === 0 && !page.hasMore ? " (empty watchlist)" : ""}`,
+  };
+}
+
+/**
  * The synopsis and poster of the film an entry links to, answered only for the
  * fields a page's own preview lacked. One film is one request.
  */
@@ -168,7 +204,14 @@ async function preview(subject: Subject | undefined): Promise<Data> {
 export default () =>
   serve(async ({ command, params }) => {
     if (command === "catalogue") {
-      return await catalogue(params.settings ?? {}, params.paging);
+      return await catalogue(
+        params.settings ?? {},
+        params.secrets,
+        params.paging,
+      );
+    }
+    if (command === "whoami") {
+      return await whoami(params.secrets);
     }
     if (command === "preview") {
       return await preview(params.subject);

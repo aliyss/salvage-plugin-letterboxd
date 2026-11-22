@@ -21,11 +21,14 @@ Helper** on your own computer; nothing about the watchlist reaches the server.
   synopsis or picture is filled in from the film's own page: its description
   and its poster.
 
-## No sign-in
+## Sign-in
 
-A Letterboxd watchlist is public, so there is no token, no password and no
-cookie: the canvas reads the profile you name. Set the username in the canvas's
-settings; the profile has to be public for the grid to be served at all.
+There is no token, no password and no session: a Letterboxd watchlist is public,
+and the username is the whole of it. Type it on **Authenticate with Letterboxd**
+on the plugin's page, not per canvas, so every canvas and every link preview
+reads the same profile. The helper checks the name with `whoami` and keeps it
+on this computer; the profile has to be public for the grid to be served at
+all. Signing out removes the name from this computer.
 
 ## Where the data comes from
 
@@ -54,10 +57,10 @@ Two things about that shape decide how the canvas behaves:
 
 ## Settings
 
-| Setting | Default | Meaning |
+| Setting | Where | Meaning |
 | --- | --- | --- |
-| Letterboxd username | — | The public profile whose watchlist is drawn |
-| How many films | 30 | Between 5 and 50 |
+| Letterboxd username | Plugin sign-in | The public profile the plugin reads |
+| How many films | Canvas | Between 5 and 50, loaded as you scroll |
 
 | Canvas name | Watchlist | The name the canvas starts with |
 | Canvas route | watchlist | Its URL segment, under your own space |
